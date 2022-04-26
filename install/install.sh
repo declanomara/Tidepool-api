@@ -7,4 +7,5 @@ mkdir /usr/share/Tidepool-frontend
 sudo cp -r * /usr/share/Tidepool-frontend/
 
 sudo systemctl daemon-reload
+sudo systemctl restart tidepool-api.service
 sudo systemctl enable tidepool-api.service
