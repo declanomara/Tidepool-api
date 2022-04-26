@@ -30,7 +30,8 @@ def all_latest_stats():
 
     response = {}
     for stat in data_rates:
-        response[stat['instrument']] = {'data_rate': stat['data_rate']}
+        response[stat['instrument']] = {'data_rate': stat['data_rate'],
+                                        'timestamp': stat['timestamp']}
 
     return response
 
