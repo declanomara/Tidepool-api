@@ -26,10 +26,13 @@ def root():
 
 @app.get('/v1/stats/latest/')
 def all_latest_stats():
+    print('getting stats')
     data_rates = tidepool_stats_db['latest'].find({})
 
     response = {}
     for doc in data_rates:
+        print(doc)
+        doc.pop('_id')
         instrument = doc.pop('instrument')
 
         stats = {}
@@ -38,6 +41,7 @@ def all_latest_stats():
 
         response[instrument] = stats
 
+    print(response)
     return response
 
 
