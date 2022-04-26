@@ -1,5 +1,8 @@
+import time
 import pymongo
 import helpers
+import datetime
+import numpy as np
 
 from fastapi import FastAPI, HTTPException
 
@@ -26,12 +29,10 @@ def root():
 
 @app.get('/v1/stats/latest/')
 def all_latest_stats():
-    print('getting stats')
     data_rates = tidepool_stats_db['latest'].find({})
 
     response = {}
     for doc in data_rates:
-        print(doc)
         doc.pop('_id')
         instrument = doc.pop('instrument')
 
@@ -41,7 +42,6 @@ def all_latest_stats():
 
         response[instrument] = stats
 
-    print(response)
     return response
 
 
@@ -54,3 +54,51 @@ def latest_stats(instrument):
 
     else:
         raise HTTPException(status_code=404, detail=f"Instrument '{instrument}' not found.")
+
+
+@app.get('/v1/data/instruments')
+def list_instruments():
+    instruments = tidepool_db.list_collection_names()
+    instruments.remove('raw')
+
+    return instruments
+
+
+@app.get('/v1/data/')
+def data_info():
+    instruments = tidepool_db.list_collection_names()
+    instruments.remove('raw')
+
+    stats = all_latest_stats()
+
+    info = {}
+    for instrument in instruments:
+        info[instrument] = stats[instrument]['count']
+
+    return info
+
+
+@app.get('/v1/data/{instrument}')
+def instrument_data(instrument, after: float = 0.0, count: int = 1000):
+    if instrument not in list_instruments():
+        raise HTTPException(status_code=404, detail=f"Instrument '{instrument}' not found.")
+
+    after = 0 if not (time.time() > after > 0) else after
+    count = 1000 if not (1000 > count > 0) else count
+
+    date = datetime.datetime.utcfromtimestamp(after)
+
+    col = tidepool_db[instrument]
+    docs = list(col.find({'time': {'$gt': date}}, {'_id': False}))
+
+    if len(docs) == 0:
+        return []
+
+    if count > len(docs):
+        count = len(docs) - 1
+
+    indeces = np.round(np.linspace(0, len(docs) - 1, count)).astype(int)
+
+    result = [docs[idx] for idx in indeces]
+
+    return result
