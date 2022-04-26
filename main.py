@@ -26,12 +26,17 @@ def root():
 
 @app.get('/v1/stats/latest/')
 def all_latest_stats():
-    data_rates = tidepool_stats_db['latest'].find({'type': 'data_speed'})
+    data_rates = tidepool_stats_db['latest'].find({})
 
     response = {}
-    for stat in data_rates:
-        response[stat['instrument']] = {'data_rate': stat['data_rate'],
-                                        'timestamp': stat['timestamp']}
+    for doc in data_rates:
+        instrument = doc.pop('instrument')
+
+        stats = {}
+        for key, value in doc.items():
+            stats[key] = value
+
+        response[instrument] = stats
 
     return response
 
