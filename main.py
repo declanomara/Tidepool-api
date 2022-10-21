@@ -1,38 +1,28 @@
 import time
 import pymongo
-import helpers
 import datetime
 import numpy as np
 
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from helpers.misc import load_config
+from helpers.ipc import gather_stats
+# from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
-origin_regex = r'http(s*):\/\/([a-zA-Z].)*tidepool.finance(\/[a-zA-Z]\d)*'
-app.add_middleware(CORSMiddleware,
-                   allow_origin_regex=origin_regex,
-                   allow_credentials=True,
-                   allow_methods=["*"],
-                   allow_headers=["*"],
-                   )
+# origin_regex = r'http(s*):\/\/([a-zA-Z].)*tidepool.finance(\/[a-zA-Z]\d)*'
+# app.add_middleware(CORSMiddleware,
+#                    allow_origin_regex=origin_regex,
+#                    allow_credentials=True,
+#                    allow_methods=["*"],
+#                    allow_headers=["*"],
+#                    )
 
 VERSION = 1.0
-cfg = helpers.load_config('cfg.ini')
+cfg = load_config('cfg.ini')
 client = pymongo.MongoClient(cfg['db_string'])
 tidepool_db = client['tidepool']
 tidepool_stats_db = client['tidepool-stats']
-
-
-@app.get('/v1/')
-def root():
-
-    info = {
-        'api_version': VERSION,
-        'db_version': tidepool_db.command({'buildInfo': 1})['version']
-    }
-
-    return info
 
 
 @app.get('/v1/stats/latest/')
@@ -79,11 +69,16 @@ def data_info():
 
     stats = all_latest_stats()
 
-    info = {}
+    data = []
     for instrument in instruments:
-        info[instrument] = stats[instrument]['count']
+        data.append({
+            'instrument': instrument,
+            'count': stats[instrument]['count']
+        })
 
-    return info
+    data.sort(key=lambda x: x['count'])
+
+    return data
 
 
 @app.get('/v1/data/{instrument}')
@@ -91,13 +86,15 @@ def instrument_data(instrument, after: float = 0.0, count: int = 1000):
     if instrument not in list_instruments():
         raise HTTPException(status_code=404, detail=f"Instrument '{instrument}' not found.")
 
-    after = 0 if not (time.time() > after > 0) else after
+    after = 0 if not (0 < after < time.time()) else after
     count = 1000 if not (1000 > count > 0) else count
 
     date = datetime.datetime.utcfromtimestamp(after)
 
     col = tidepool_db[instrument]
+    print('Gathering documents from collection...')
     docs = list(col.find({'time': {'$gt': date}}, {'_id': False}))
+    print('done.')
 
     if len(docs) == 0:
         return []
@@ -105,8 +102,36 @@ def instrument_data(instrument, after: float = 0.0, count: int = 1000):
     if count > len(docs):
         count = len(docs) - 1
 
-    indeces = np.round(np.linspace(0, len(docs) - 1, count)).astype(int)
+    indices = np.round(np.linspace(0, len(docs) - 1, count)).astype(int)
 
-    result = [docs[idx] for idx in indeces]
+    result = [docs[idx] for idx in indices]
 
     return result
+
+
+@app.get('/')
+def root():
+    return {'versions': ['v1']}
+
+
+@app.get('/v1/')
+def v1():
+
+    info = {
+        'api_version': VERSION,
+        'db_version': tidepool_db.command({'buildInfo': 1})['version'],
+        'endpoints': ['stats', 'data']
+    }
+
+    return info
+
+@app.get('/v1/stats/')
+def stats():
+    return gather_stats()
+
+
+@app.get('/v1/stats/{type}')
+def stats_of_type(type):
+    return stats()[type]
+
+
