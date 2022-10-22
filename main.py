@@ -125,6 +125,7 @@ def v1():
 
     return info
 
+
 @app.get('/v1/stats/')
 def stats():
     return gather_stats()
@@ -133,5 +134,9 @@ def stats():
 @app.get('/v1/stats/{type}')
 def stats_of_type(type):
     return stats()[type]
+
+@app.get('/v1/stats/instruments/{instrument}')
+def instrument_stats(instrument):
+    return stats()['instruments'][instrument]
 
 
