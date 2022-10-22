@@ -6,17 +6,17 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from helpers.misc import load_config
 from helpers.ipc import gather_stats
-# from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
-# origin_regex = r'http(s*):\/\/([a-zA-Z].)*tidepool.finance(\/[a-zA-Z]\d)*'
-# app.add_middleware(CORSMiddleware,
-#                    allow_origin_regex=origin_regex,
-#                    allow_credentials=True,
-#                    allow_methods=["*"],
-#                    allow_headers=["*"],
-#                    )
+origin_regex = r'http(s*):\/\/([a-zA-Z].)*tidepool.finance(\/[a-zA-Z]\d)*'
+app.add_middleware(CORSMiddleware,
+                   allow_origin_regex=origin_regex,
+                   allow_credentials=True,
+                   allow_methods=["*"],
+                   allow_headers=["*"],
+                   )
 
 VERSION = 1.0
 cfg = load_config('cfg.ini')
