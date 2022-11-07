@@ -133,7 +133,9 @@ def stats():
 
 @app.get('/v1/stats/{category}')
 def stats_of_category(category):
-    # TODO: Move /stats/instruments to /stats/datastream
+    if category == 'database':
+        return database_stats()
+
     return stats()[category]
 
 
