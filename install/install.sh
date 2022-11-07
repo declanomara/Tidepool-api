@@ -7,7 +7,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 
-INSTALL_DIR="/usr/share/Tidepool-frontend/"
+INSTALL_DIR="/usr/share/Tidepool-api/"
 
 
 # Check if in virtual environment already
