@@ -2,14 +2,14 @@
 Description=Tidepool API
 Wants=network-online.target
 After=network-online.target
-StartLimitIntervalSec=500
-StartLimitBurst=5
 
 [Service]
 Type=simple
 Restart=on-failure
 RestartSec=5s
-ExecStart=/usr/share/Tidepool-frontend/install/restart_api.sh
+ExecStart=/usr/share/Tidepool-api/install/restart_api.sh
+StartLimitInterval=500
+StartLimitBurst=5
 
 [Install]
 WantedBy=multi-user.target

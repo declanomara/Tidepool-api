@@ -131,10 +131,10 @@ def stats():
     return gather_stats()
 
 
-# @app.get('/v1/stats/{type}')
-# def stats_of_category(category):
-#     # TODO: Move /stats/instruments to /stats/datastream
-#     return stats()[category]
+@app.get('/v1/stats/{category}')
+def stats_of_category(category):
+    # TODO: Move /stats/instruments to /stats/datastream
+    return stats()[category]
 
 
 @app.get('/v1/stats/datastream/{instrument}')
