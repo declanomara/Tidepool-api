@@ -131,12 +131,33 @@ def stats():
     return gather_stats()
 
 
-@app.get('/v1/stats/{type}')
-def stats_of_type(type):
-    return stats()[type]
+# @app.get('/v1/stats/{type}')
+# def stats_of_category(category):
+#     # TODO: Move /stats/instruments to /stats/datastream
+#     return stats()[category]
 
-@app.get('/v1/stats/instruments/{instrument}')
-def instrument_stats(instrument):
+
+@app.get('/v1/stats/datastream/{instrument}')
+def datastream_stats(instrument):
     return stats()['instruments'][instrument]
+
+
+@app.get('/v1/stats/database')
+def database_stats():
+    stats = {}
+    for col in tidepool_db.list_collection_names():
+        stats[col] = tidepool_db[col].estimated_document_count()
+    return stats
+
+
+@app.get('/v1/status')
+def status():
+    status_dict = {
+        'api': True,
+        'datastream': bool(stats()),
+        'trading': False
+    }
+
+    return status_dict
 
 
